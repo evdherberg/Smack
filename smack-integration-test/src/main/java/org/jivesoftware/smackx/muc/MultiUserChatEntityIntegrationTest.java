@@ -35,6 +35,7 @@ import org.igniterealtime.smack.inttest.TestNotPossibleException;
 import org.igniterealtime.smack.inttest.annotations.SmackIntegrationTest;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.jid.parts.Resourcepart;
 
 public class MultiUserChatEntityIntegrationTest extends AbstractMultiUserChatIntegrationTest {
 
@@ -106,8 +107,8 @@ public class MultiUserChatEntityIntegrationTest extends AbstractMultiUserChatInt
         EntityBareJid mucAddressHidden = getRandomRoom("smack-inttest-hiddenroom");
         MultiUserChat mucAsSeenByTwo = mucManagerTwo.getMultiUserChat(mucAddressHidden);
 
-        createMuc(mucAsSeenByOne, "one-" + randomString);
-        createHiddenMuc(mucAsSeenByTwo, "two-" + randomString);
+        createMuc(mucAsSeenByOne, Resourcepart.from("one-" + randomString));
+        createHiddenMuc(mucAsSeenByTwo, Resourcepart.from("two-" + randomString));
 
         try {
             Map<EntityBareJid, HostedRoom> rooms = mucManagerThree.getRoomsHostedBy(mucService);
@@ -134,7 +135,7 @@ public class MultiUserChatEntityIntegrationTest extends AbstractMultiUserChatInt
     public void mucTestForDiscoveringRoomInfo() throws Exception {
         EntityBareJid mucAddress = getRandomRoom("smack-inttest-discoinfo");
         MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
-        createMuc(mucAsSeenByOne, "one-" + randomString);
+        createMuc(mucAsSeenByOne, Resourcepart.from("one-" + randomString));
 
         try {
             // Use SDM because mucManagerOne.getRoomInfo(mucAddress) might not use Disco
@@ -162,7 +163,7 @@ public class MultiUserChatEntityIntegrationTest extends AbstractMultiUserChatInt
     public void mucTestForDiscoveringRoomItems() throws Exception {
         EntityBareJid mucAddress = getRandomRoom("smack-inttest-discoitems");
         MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
-        createMuc(mucAsSeenByOne, "one-" + randomString);
+        createMuc(mucAsSeenByOne, Resourcepart.from("one-" + randomString));
 
         try {
             DiscoverItems roomItems = ServiceDiscoveryManager.getInstanceFor(conTwo).discoverItems(mucAddress, null);
@@ -188,12 +189,13 @@ public class MultiUserChatEntityIntegrationTest extends AbstractMultiUserChatInt
     public void mucTestForRejectingDiscoOnRoomOccupantByNonOccupant() throws Exception {
         EntityBareJid mucAddress = getRandomRoom("smack-inttest-discoitems");
         MultiUserChat mucAsSeenByOne = mucManagerOne.getMultiUserChat(mucAddress);
-        createMuc(mucAsSeenByOne, "one-" + randomString);
+        final Resourcepart nicknameOne = Resourcepart.from("one-" + randomString);
+        createMuc(mucAsSeenByOne, nicknameOne);
 
         try {
             XMPPException.XMPPErrorException xe = assertThrows(XMPPException.XMPPErrorException.class,
                             () -> ServiceDiscoveryManager.getInstanceFor(conTwo).discoverItems(
-                                            JidCreate.entityFullFrom(mucAddress + "/one-" + randomString), null));
+                                            JidCreate.entityFullFrom(mucAddress, nicknameOne), null));
             assertEquals(xe.getStanzaError().getCondition().toString(), "bad-request");
         } finally {
             tryDestroy(mucAsSeenByOne);

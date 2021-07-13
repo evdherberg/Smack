@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2020 Florian Schmaus, 2021 Dan Caseley
+ * Copyright 2021 Florian Schmaus, Dan Caseley
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ import org.jxmpp.jid.parts.Resourcepart;
 public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends AbstractMultiUserChatIntegrationTest {
 
     public MultiUserChatRolesAffiliationsPrivilegesIntegrationTest(SmackIntegrationTestEnvironment environment)
-                    throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
-                    SmackException.NotConnectedException, InterruptedException, TestNotPossibleException {
+            throws SmackException.NoResponseException, XMPPException.XMPPErrorException,
+            SmackException.NotConnectedException, InterruptedException, TestNotPossibleException {
         super(environment);
     }
 
@@ -647,13 +647,13 @@ public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends Abs
 
         createMuc(mucAsSeenByOne, Resourcepart.from(nicknameOne.toString()));
 
-        mucAsSeenByTwo.join(nicknameTwo);
-        mucAsSeenByThree.join(nicknameThree);
-
-        mucAsSeenByOne.grantOwnership(conTwo.getUser().asBareJid());
-        mucAsSeenByOne.grantAdmin(conThree.getUser().asBareJid());
-
         try {
+            mucAsSeenByTwo.join(nicknameTwo);
+            mucAsSeenByThree.join(nicknameThree);
+
+            mucAsSeenByOne.grantOwnership(conTwo.getUser().asBareJid());
+            mucAsSeenByOne.grantAdmin(conThree.getUser().asBareJid());
+
             mucAsSeenByTwo.leave();
             mucAsSeenByThree.leave();
             Presence p2 = mucAsSeenByTwo.join(nicknameTwo);
@@ -695,10 +695,9 @@ public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends Abs
 
         createModeratedMuc(mucAsSeenByOne, nicknameOne);
 
-        mucAsSeenByTwo.join(nicknameTwo);
-        mucAsSeenByOne.grantModerator(nicknameTwo);
-
         try {
+            mucAsSeenByTwo.join(nicknameTwo);
+            mucAsSeenByOne.grantModerator(nicknameTwo);
             XMPPException.XMPPErrorException xe = assertThrows(XMPPException.XMPPErrorException.class,
                             () -> mucAsSeenByTwo.revokeVoice(nicknameOne));
             assertEquals(xe.getStanzaError().getCondition().toString(), "not-allowed");
@@ -840,10 +839,11 @@ public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends Abs
                 resultSyncPoint.signal("done");
             }
         });
-        mucAsSeenByOne.grantAdmin(conTwo.getUser().asBareJid());
-        resultSyncPoint.waitForResult(timeout);
 
         try {
+            mucAsSeenByOne.grantAdmin(conTwo.getUser().asBareJid());
+            resultSyncPoint.waitForResult(timeout);
+
             assertEquals(mucAsSeenByOne.getOccupantsCount(), 3);
             assertEquals(MUCRole.moderator, mucAsSeenByOne.getOccupant(
                             JidCreate.entityFullFrom(mucAddress, nicknameOne)).getRole());
@@ -884,12 +884,6 @@ public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends Abs
 
         createMembersOnlyMuc(mucAsSeenByOne, nicknameOne);
 
-        mucAsSeenByOne.grantMembership(conTwo.getUser().asBareJid());
-        mucAsSeenByOne.grantMembership(conThree.getUser().asBareJid());
-
-        // List<Jid> members = mucAsSeenByOne.getMembers().stream().map(a -> a.getJid()).collect(Collectors.toList());
-        // assertTrue(members.contains(conTwo.getUser().asBareJid()));
-
         final ResultSyncPoint<String, Exception> adminResultSyncPoint = new ResultSyncPoint<>();
         mucAsSeenByOne.addParticipantStatusListener(new ParticipantStatusListener() {
             @Override
@@ -899,6 +893,9 @@ public class MultiUserChatRolesAffiliationsPrivilegesIntegrationTest extends Abs
         });
 
         try {
+            mucAsSeenByOne.grantMembership(conTwo.getUser().asBareJid());
+            mucAsSeenByOne.grantMembership(conThree.getUser().asBareJid());
+
             mucAsSeenByTwo.join(nicknameTwo);
             mucAsSeenByThree.join(nicknameThree);
             mucAsSeenByOne.grantAdmin(conTwo.getUser().asBareJid());

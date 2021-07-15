@@ -122,7 +122,7 @@ public class AbstractMultiUserChatIntegrationTest extends AbstractSmackIntegrati
         muc.sendConfigurationForm(answerForm);
     }
 
-    static void createHiddenMuc(MultiUserChat muc, Resourcepart resourceName) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, InterruptedException, MultiUserChatException.MucAlreadyJoinedException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, MultiUserChatException.NotAMucServiceException, XmppStringprepException {
+    static void createHiddenMuc(MultiUserChat muc, Resourcepart resourceName) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, InterruptedException, MultiUserChatException.MucAlreadyJoinedException, SmackException.NotConnectedException, MultiUserChatException.MissingMucCreationAcknowledgeException, MultiUserChatException.NotAMucServiceException {
         muc.create(resourceName);
         Form configForm = muc.getConfigurationForm();
         FillableForm answerForm = configForm.getFillableForm();
@@ -173,6 +173,13 @@ public class AbstractMultiUserChatIntegrationTest extends AbstractSmackIntegrati
         FillableForm answerForm = configForm.getFillableForm();
         answerForm.setAnswer("muc#roomconfig_passwordprotectedroom", true);
         answerForm.setAnswer("muc#roomconfig_roomsecret", password);
+        muc.sendConfigurationForm(answerForm);
+    }
+
+    static void setMaxUsers(MultiUserChat muc, int maxUsers) throws SmackException.NoResponseException, XMPPException.XMPPErrorException, InterruptedException, SmackException.NotConnectedException {
+        Form configForm = muc.getConfigurationForm();
+        FillableForm answerForm = configForm.getFillableForm();
+        answerForm.setAnswer("muc#roomconfig_maxusers", maxUsers);
         muc.sendConfigurationForm(answerForm);
     }
 }

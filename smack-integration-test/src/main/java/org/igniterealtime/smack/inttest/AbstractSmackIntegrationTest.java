@@ -16,10 +16,14 @@
  */
 package org.igniterealtime.smack.inttest;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.filter.AndFilter;
@@ -27,8 +31,6 @@ import org.jivesoftware.smack.filter.FromMatchesFilter;
 import org.jivesoftware.smack.filter.PresenceTypeFilter;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.util.Async.ThrowingRunnable;
-
-import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
 
 public abstract class AbstractSmackIntegrationTest extends AbstractSmackIntTest {
 
@@ -109,5 +111,51 @@ public abstract class AbstractSmackIntegrationTest extends AbstractSmackIntTest 
         } finally {
             conA.removeAsyncStanzaListener(presenceListener);
         }
+    }
+
+    /**
+     * Execute a bash command. We can handle complex bash commands including
+     * multiple executions (; | && ||), quotes, expansions ($), escapes (\), e.g.:
+     *     "cd /abc/def; mv ghi 'older ghi '$(whoami)"
+     * @param scriptCommand the script to execute
+     * @return true if bash got started, but your command may have failed.
+     */
+    private boolean executeScript(String scriptCommand) {
+        boolean success = false;
+        final String command = sinttestConfiguration.scriptPath + scriptCommand;
+        System.out.println("Executing BASH command:\n" + command);
+        Runtime r = Runtime.getRuntime();
+        // Use bash -c so we can handle things like multi commands separated by ; and
+        // things like quotes, $, |, and \. My tests show that command comes as
+        // one argument to bash, so we do not need to quote it to make it one thing.
+        // Also, exec may object if it does not have an executable file as the first thing,
+        // so having bash here makes it happy provided bash is installed and in path.
+        String[] commands = {"bash", "-c", command};
+        try {
+            Process p = r.exec(commands);
+
+            p.waitFor();
+            BufferedReader b = new BufferedReader(new InputStreamReader(p.getInputStream(), Charset.defaultCharset()));
+            String line = "";
+
+            while ((line = b.readLine()) != null) {
+                System.out.println(line);
+            }
+
+            b.close();
+            success = true;
+        } catch (Exception e) {
+            System.err.println("Failed to execute bash with command: " + command);
+            e.printStackTrace();
+        }
+        return success;
+    }
+
+    protected void disconnectNode(int nodeNr) {
+        executeScript("block_node_from_cluster.sh " + nodeNr);
+    }
+
+    protected void reconnectNode(int nodeNr) {
+        executeScript("unblock_node_from_cluster.sh " + nodeNr);
     }
 }

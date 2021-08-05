@@ -16,6 +16,7 @@
  */
 package org.igniterealtime.smack.inttest;
 
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,8 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import javax.net.ssl.SSLContext;
-
+import eu.geekplace.javapinning.java7.Java7Pinning;
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smack.debugger.ConsoleDebugger;
 import org.jivesoftware.smack.util.Function;
@@ -38,10 +38,7 @@ import org.jivesoftware.smack.util.Objects;
 import org.jivesoftware.smack.util.ParserUtils;
 import org.jivesoftware.smack.util.SslContextFactory;
 import org.jivesoftware.smack.util.StringUtils;
-
 import org.jivesoftware.smackx.debugger.EnhancedDebugger;
-
-import eu.geekplace.javapinning.java7.Java7Pinning;
 import org.jxmpp.jid.DomainBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.stringprep.XmppStringprepException;
@@ -67,6 +64,11 @@ public final class Configuration {
         minidns,
         javax,
         dnsjava,
+    }
+
+    public enum TestMode {
+        normal,
+        clustered,
     }
 
     public final DomainBareJid service;
@@ -116,6 +118,10 @@ public final class Configuration {
     public final boolean verbose;
 
     public final DnsResolver dnsResolver;
+
+    public final TestMode testMode;
+
+    public final String scriptPath;
 
     private Configuration(Configuration.Builder builder) throws KeyManagementException, NoSuchAlgorithmException {
         service = Objects.requireNonNull(builder.service,
@@ -192,6 +198,10 @@ public final class Configuration {
         this.verbose = builder.verbose;
 
         this.dnsResolver = builder.dnsResolver;
+
+        this.testMode = builder.testMode;
+
+        this.scriptPath = builder.scriptPath;
     }
 
     public boolean isAccountRegistrationPossible() {
@@ -245,6 +255,10 @@ public final class Configuration {
         private boolean verbose;
 
         private DnsResolver dnsResolver = DnsResolver.minidns;
+
+        private TestMode testMode = TestMode.normal;
+
+        private String scriptPath;
 
         private Builder() {
         }
@@ -313,6 +327,21 @@ public final class Configuration {
             else {
                 securityMode = SecurityMode.required;
             }
+            return this;
+        }
+
+        public Builder setTestMode(String testModeString) {
+            if (testModeString != null) {
+                testMode = TestMode.valueOf(testModeString);
+            }
+            else {
+                testMode = TestMode.normal;
+            }
+            return this;
+        }
+
+        public Builder setScriptPath(String scriptPath) {
+            this.scriptPath = scriptPath;
             return this;
         }
 
@@ -461,6 +490,8 @@ public final class Configuration {
         builder.setService(properties.getProperty("service"));
         builder.setServiceTlsPin(properties.getProperty("serviceTlsPin"));
         builder.setSecurityMode(properties.getProperty("securityMode"));
+        builder.setTestMode(properties.getProperty("testMode"));
+        builder.setScriptPath(properties.getProperty("scriptPath"));
         builder.setReplyTimeout(properties.getProperty("replyTimeout", "60000"));
 
         String adminAccountUsername = properties.getProperty("adminAccountUsername");

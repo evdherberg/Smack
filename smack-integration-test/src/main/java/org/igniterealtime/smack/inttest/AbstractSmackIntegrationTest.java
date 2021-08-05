@@ -154,10 +154,6 @@ public abstract class AbstractSmackIntegrationTest extends AbstractSmackIntTest 
         return outputLines.toArray(new String[0]);
     }
 
-    protected void testScript(int nodeNr) throws SmackException.ScriptExecutionException {
-        executeScript("test.sh " + nodeNr);
-    }
-
     protected void disconnectNode(int nodeNr) throws SmackException.ScriptExecutionException {
         executeScript("block_node_from_cluster.sh " + nodeNr);
     }

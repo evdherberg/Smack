@@ -217,6 +217,26 @@ public abstract class SmackException extends Exception {
         }
     }
 
+    public static class ScriptExecutionException extends SmackException {
+
+        private static final long serialVersionUID = 7045047422906269363L;
+
+        private String[] scriptOutput;
+
+        public ScriptExecutionException(Throwable wrappedThrowable) {
+            super("Script execution failed", wrappedThrowable);
+        }
+
+        public ScriptExecutionException(Throwable wrappedThrowable, String[] scriptOutput) {
+            super("Script execution failed", wrappedThrowable);
+            this.scriptOutput = scriptOutput;
+        }
+
+        public String[] getScriptOutput() {
+            return scriptOutput;
+        }
+    }
+
     public abstract static class SecurityRequiredException extends SmackException {
 
         /**

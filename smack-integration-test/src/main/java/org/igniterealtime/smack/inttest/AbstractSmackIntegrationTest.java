@@ -17,6 +17,7 @@
 package org.igniterealtime.smack.inttest;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.igniterealtime.smack.inttest.util.SimpleResultSyncPoint;
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.StanzaListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.filter.AndFilter;
@@ -114,19 +116,21 @@ public abstract class AbstractSmackIntegrationTest extends AbstractSmackIntTest 
     }
 
     /**
-     * Execute a bash command. We can handle complex bash commands including
+     * Execute a script. We can handle complex bash commands including
      * multiple executions (; | && ||), quotes, expansions ($), escapes (\), e.g.:
      *     "cd /abc/def; mv ghi 'older ghi '$(whoami)"
+     * For this to work, the configuration parameter "scriptPath" needs to be set properly.
      * @param scriptCommand the script to execute
-     * @return true if bash got started, but your command may have failed.
+     * @return the script output
      */
-    private boolean executeScript(String scriptCommand) {
-        boolean success = false;
+    protected String[] executeScript(String scriptCommand) throws SmackException.ScriptExecutionException {
         final String command = sinttestConfiguration.scriptPath + scriptCommand;
-        System.out.println("Executing BASH command:\n" + command);
+        final List<String> outputLines = new ArrayList<>();
+        outputLines.add("Executing BASH command:\n" + command);
+        outputLines.add("======================");
         Runtime r = Runtime.getRuntime();
         // Use bash -c so we can handle things like multi commands separated by ; and
-        // things like quotes, $, |, and \. My tests show that command comes as
+        // things like quotes, $, |, and \. Tests show that command comes as
         // one argument to bash, so we do not need to quote it to make it one thing.
         // Also, exec may object if it does not have an executable file as the first thing,
         // so having bash here makes it happy provided bash is installed and in path.
@@ -139,23 +143,26 @@ public abstract class AbstractSmackIntegrationTest extends AbstractSmackIntTest 
             String line = "";
 
             while ((line = b.readLine()) != null) {
-                System.out.println(line);
+                outputLines.add(line);
             }
 
             b.close();
-            success = true;
-        } catch (Exception e) {
-            System.err.println("Failed to execute bash with command: " + command);
-            e.printStackTrace();
+        } catch (IOException | InterruptedException e) {
+            throw new SmackException.ScriptExecutionException(e, outputLines.toArray(new String[0]));
         }
-        return success;
+
+        return outputLines.toArray(new String[0]);
     }
 
-    protected void disconnectNode(int nodeNr) {
+    protected void testScript(int nodeNr) throws SmackException.ScriptExecutionException {
+        executeScript("test.sh " + nodeNr);
+    }
+
+    protected void disconnectNode(int nodeNr) throws SmackException.ScriptExecutionException {
         executeScript("block_node_from_cluster.sh " + nodeNr);
     }
 
-    protected void reconnectNode(int nodeNr) {
+    protected void reconnectNode(int nodeNr) throws SmackException.ScriptExecutionException {
         executeScript("unblock_node_from_cluster.sh " + nodeNr);
     }
 }
